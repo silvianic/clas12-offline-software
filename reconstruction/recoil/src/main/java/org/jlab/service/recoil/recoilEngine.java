@@ -8,7 +8,7 @@ import javax.swing.JFrame;
 import org.jlab.clas.reco.ReconstructionEngine;
 import org.jlab.detector.base.DetectorType;
 import org.jlab.detector.calib.utils.DatabaseConstantProvider;
-import org.jlab.detector.geant4.v2.recoil.recoilStripFactory;
+import org.jlab.detector.geant4.v2.RECOIL.RecoilStripFactory;
 import org.jlab.geom.prim.Point3D;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.fitter.DataFitter;
@@ -29,10 +29,10 @@ public class recoilEngine extends ReconstructionEngine {
 
     public static Logger LOGGER = Logger.getLogger(recoilEngine.class.getName());
 
-    public static recoilStripFactory factory = new recoilStripFactory();
+    public static RecoilStripFactory factory = new RecoilStripFactory();
 
     public recoilEngine() {
-        super("recoil","niccolai","1.0");
+        super("RECOIL","niccolai","1.0");
     }
 
     @Override
@@ -41,11 +41,11 @@ public class recoilEngine extends ReconstructionEngine {
         // init ConstantsManager to read constants from CCDB
         String variationName = Optional.ofNullable(this.getEngineConfigString("variation")).orElse("default");
         DatabaseConstantProvider cp = new DatabaseConstantProvider(11, variationName);
-        factory.init(cp, false, recoilConstants.NREGION);
+        factory.init(cp, recoilConstants.NREGION);
         // register output banks for drop option        
-        this.registerOutputBank("recoil::hits");
-        this.registerOutputBank("recoil::clusters");
-        this.registerOutputBank("recoil::crosses");
+        this.registerOutputBank("RECOIL::hits");
+        this.registerOutputBank("RECOIL::clusters");
+        this.registerOutputBank("RECOIL::crosses");
 
         LOGGER.log(Level.INFO, "--> recoil is ready...");
         return true;
@@ -140,7 +140,6 @@ public class recoilEngine extends ReconstructionEngine {
             f1.setParLimits(0, amp*0.2,   amp*1.2);
             f1.setParLimits(1, mean*0.5,  mean*1.5);
             f1.setParLimits(2, sigma*0.2, sigma*2);
-//            System.out.print("1st...");
             DataFitter.fit(f1, histo, "Q");
             mean  = f1.getParameter(1);
             sigma = f1.getParameter(2);

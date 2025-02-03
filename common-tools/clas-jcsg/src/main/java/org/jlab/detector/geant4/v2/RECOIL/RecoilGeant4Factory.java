@@ -263,10 +263,11 @@ public final class RecoilGeant4Factory extends Geant4Factory {
         int s = sector;
         int c = chamber;
 	int re = region;
-	
+
         String volumeName;
  
-	volumeName = "rg" + r + "_s" + s + "_r" + re + "_c" + c + "_cathode_gas";
+	//	volumeName = "rg" + r + "_s" + s + "_r" + re + "_c" + c + "_cathode_gas";
+	volumeName = "rg" + r + "_s" + s + "_c" + c + "_cathode_gas";
 	return this.getAllVolumes().stream()
                       .filter(volume -> (volume.getName().contains(volumeName)))
                       .findAny()
@@ -296,7 +297,7 @@ public final class RecoilGeant4Factory extends Geant4Factory {
 
         RecoilConstants.connect(cp);
         
-        RecoilGeant4Factory factory = new RecoilGeant4Factory(cp, 2);
+        RecoilGeant4Factory factory = new RecoilGeant4Factory(cp, 1);
             
         factory.getAllVolumes().forEach(volume -> {
             System.out.println(volume.gemcString());

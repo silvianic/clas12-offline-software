@@ -9,7 +9,7 @@ public class recoilConstants {
     
     // geometry
     public final static int NSECTOR  = 2;
-    public final static int NLAYER   = 2;
+    public final static int NLAYER   = 6;
     public final static int NREGION  = 3;
     public final static int NCHAMBER = 1;
     public final static int[] NSTRIPS  = { 351, 582, 834}; // number of strips for the three chambers

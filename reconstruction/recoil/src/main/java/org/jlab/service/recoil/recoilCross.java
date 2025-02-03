@@ -30,7 +30,7 @@ public class recoilCross {
     
     public recoilCross(recoilCluster c1, recoilCluster c2) {
         
-        Vector3D  dir = c1.getLine().direction().cross(c2.getLine().direction());
+	Vector3D  dir = c1.getLine().direction().cross(c2.getLine().direction());
         Plane3D plane = new Plane3D(c1.getLine().origin(), c1.getLine().direction().cross(dir));
         Point3D point = new Point3D();
         int nint = plane.intersectionSegment(c2.getLine(), point);

@@ -6,7 +6,7 @@ import org.jlab.detector.banks.RawDataBank;
 import org.jlab.detector.base.DetectorDescriptor;
 import org.jlab.detector.base.DetectorType;
 import org.jlab.detector.calib.utils.ConstantsManager;
-import org.jlab.detector.geant4.v2.RECOIL.recoilStripFactory;
+import org.jlab.detector.geant4.v2.RECOIL.RecoilStripFactory;
 import org.jlab.geom.prim.Line3D;
 import org.jlab.io.base.DataEvent;
 
@@ -161,7 +161,7 @@ public class recoilStrip implements Comparable {
         return -1;
     }
     
-    public static List<recoilStrip> getStrips(DataEvent event, recoilStripFactory factory, ConstantsManager ccdb) {
+    public static List<recoilStrip> getStrips(DataEvent event, RecoilStripFactory factory, ConstantsManager ccdb) {
         
         List<recoilStrip> strips = new ArrayList<>();
         
@@ -171,7 +171,7 @@ public class recoilStrip implements Comparable {
             //DataBank bank = event.getBank("RECOIL::adc");
             for(int i = 0; i < bank.rows(); i++){
                 int  sector = bank.getByte("sector", i);
-                int   layer = bank.getByte("layer", i); 
+                int   layer = bank.getByte("layer", i);
                 int    comp = bank.getShort("component", i);
                 int     adc = bank.getInt("ADC", i);
                 double time = bank.getFloat("time", i);

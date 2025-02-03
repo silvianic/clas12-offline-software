@@ -73,7 +73,7 @@ public final class RecoilStripFactory {
 	nChambers = RecoilConstants.NCHAMBERS;
 	nLayers   = RecoilConstants.NLAYERS;
         this.fillStripLists();
-        this.fillPlaneLists();
+	//        this.fillPlaneLists();
     }
 
     /**
@@ -117,8 +117,8 @@ public final class RecoilStripFactory {
 	int nAB = (int) (2 * xHalf / RecoilConstants.PITCH);
   	int nAC = (int) (2 * yHalf / RecoilConstants.PITCH);
 
-	int nStrips = nAB + nAC +1 ;
-	//	System.out.println("NSTRIPS "+ nStrips +" ciao");
+	int nStrips = nAB + nAC;
+
         return nStrips;
     }
 
@@ -153,7 +153,8 @@ public final class RecoilStripFactory {
             for (int i = 0; i < chamberIndex; i++) {
 		for (int j = 0; j < nRegions; j++) {
 		    nStripTotal += this.getNStripChamber(i,j);		
-		}}
+		}
+	    }
         }
 
         //Strip ID: from 1 to  getNStripChamber       
@@ -172,40 +173,27 @@ public final class RecoilStripFactory {
     private Line3d createStrip(int sector, int region, int layer, int strip) {
 
         int chamberIndex = getChamberIndex(strip);
-          
         int cStrip = this.getLocalStripId(strip);
-       
+	
         // CHAMBER reference frame
         // new numeration with stri ID_strip=0 crossing (0,0,0) of chamber
-        double[] dim = factory.getChamber_daughter_Dimensions(region,chamberIndex);
+        double[] dim = factory.getChamber_daughter_Dimensions(region-1,chamberIndex);
         
         double yHalf          = dim[1];
 	double xHalf          = dim[0];
-	double DY = -xHalf;
-	//	double xHalfSmallBase = dim[0];
-	//	double xHalfLargeBase = dim[0];
-                
+
+	double DY = -xHalf; //v strip
+	                
         // Y coordinate of the intersection point between the x=0 and the strip line crossing for B
 
-	//        double DY = -yHalf - Math.tan(Math.toRadians(RecoilConstants.STEREOANGLE)) *xHalfSmallBase;
-	if (layer % 2 != 0) { 
+	if (layer % 2 != 0) { //u strip
 	    DY = -yHalf;
 	}
-	// ID of the strip 
-        //int nS = (int) (DY * Math.cos(Math.toRadians(RecoilConstants.STEREOANGLE)) / RecoilConstants.PITCH);
-	int nS =  (int) (DY / RecoilConstants.PITCH);
+	// ID of the strip
+	int nS =  (int) (DY / RecoilConstants.PITCH);	
         int nCStrip = nS + (cStrip - 1);
-	System.out.println((nCStrip) + " =nCStrip");
-        //strip straight line chamber reference frame -> y = mx +c; 
-        double stereoAngle = RecoilConstants.STEREOANGLE;
-        if (layer % 2 != 0) {
-            stereoAngle = -RecoilConstants.STEREOANGLE;
-        }
-	//        double m = Math.tan(Math.toRadians(stereoAngle));
-	//        double c = nCStrip * RecoilConstants.PITCH / Math.cos(Math.toRadians(stereoAngle));
-
 	double c = nCStrip * RecoilConstants.PITCH;
-	System.out.println((c) + " =c");
+
         // Take 2 points in the strip straight line. They needs to define Line object 
         //u strips
         double oX = -xHalf;
@@ -217,14 +205,15 @@ public final class RecoilStripFactory {
         double eZ = 0;
 	
         if (layer % 2 == 0) { //v strips
-	    oX = -yHalf;
-	    oY = c;
+	    oX = c;
+	    oY = -yHalf;
 	    oZ = 0;
 	
-	    eX = yHalf;
-	    eY = c;
+	    eX = c;
+	    eY = yHalf;
 	    eZ = 0;
 	}
+	
 	Vector3d origin = new Vector3d(oX, oY, oZ);
 	Vector3d end = new Vector3d(eX, eY, eZ);
 	
@@ -241,7 +230,7 @@ public final class RecoilStripFactory {
         // CHECK intersections between line and volume
         chamberVolume.makeSensitive();
         List<DetHit> Hits = chamberVolume.getIntersections(line);
-            
+	
         if (Hits.size() >= 1) {
       
                 Vector3d TestOrigin = Hits.get(0).origin();
@@ -264,20 +253,17 @@ public final class RecoilStripFactory {
      */
     
     private Line3d getChamberStrip(int region, int sector, int chamber, int layer, int strip) {
-         
-        Line3d globalStrip = createStrip(sector, region, layer, strip);
-        Geant4Basic chamberVolume = factory.getChamberVolume(sector, region, chamber, layer);
 
-        Vector3d origin = chamberVolume.getGlobalTransform().invert().transform(globalStrip.origin());
-        Vector3d end    = chamberVolume.getGlobalTransform().invert().transform(globalStrip.end());
-
-        Line3d localStrip = new Line3d(origin, end);
-
-        return localStrip;
+	Line3d globalStrip = createStrip(sector, region, layer, strip);
+	Geant4Basic chamberVolume = factory.getChamberVolume(sector, region, chamber, layer);
+	
+	Vector3d origin = chamberVolume.getGlobalTransform().invert().transform(globalStrip.origin());
+	Vector3d end    = chamberVolume.getGlobalTransform().invert().transform(globalStrip.end());
+	
+	Line3d localStrip = new Line3d(origin, end);
+	
+	return localStrip;
     }
-
-    
-    
     /**
      * Provides the given strip line in the sector local frame
      * @param sector (1-6)
@@ -287,7 +273,8 @@ public final class RecoilStripFactory {
      */
     private Line3d getLocalStrip(int region, int sector, int layer, int strip) {
 
-        Line3d globalStrip = createStrip(sector, region,layer, strip);
+	
+        Line3d globalStrip = createStrip(sector, region, layer, strip);
         Geant4Basic sVolume = factory.getSectorVolume(region, sector);
 
         Vector3d origin = sVolume.getGlobalTransform().invert().transform(globalStrip.origin());
@@ -307,21 +294,36 @@ public final class RecoilStripFactory {
                 int sector = is+1;
                 for(int il=0; il<nLayers; il++) {
                     int layer = (2*region-1) + il;
-
                     for(int ic=0; ic<this.getNStripSector(); ic++) {
                          int strip = ic+1;
                        
-			 Line3d line = this.createStrip(sector, region,layer, strip);
-                                       
-                        Point3D origin = new Point3D(line.origin().x, line.origin().y, line.origin().z);
+			 int chamberIndex = getChamberIndex(strip);
+			 double[] dim = factory.getChamber_daughter_Dimensions(region-1,chamberIndex);
 
-                        Point3D end    = new Point3D(line.end().x,    line.end().y,    line.end().z);
+			 double yHalf          = dim[1];
+			 double xHalf          = dim[0];
+			 int cStrip = this.getLocalStripId(strip);
+			 double DY = -xHalf; //v strip
+			 if ((layer) % 2 != 0) { //u strip
+			     DY = -yHalf;
+			 }
+			 int nS =  (int) (DY / RecoilConstants.PITCH);
+			 int nCStrip = nS + (cStrip - 1);
+			 double c = nCStrip * RecoilConstants.PITCH;
+			 if (((layer) % 2 == 0 && c>-xHalf && c<xHalf)||((layer) % 2 != 0 && c>-yHalf && c<yHalf))
+			     {
+			 
+				 Line3d line = this.createStrip(sector, region,layer, strip);                                       
+				 Point3D origin = new Point3D(line.origin().x, line.origin().y, line.origin().z);
+				 
+				 Point3D end    = new Point3D(line.end().x,    line.end().y,    line.end().z);
                      
-                        Line3D global = new Line3D(origin, end);
-                        Line3D local = this.toLocal(sector, global);
+				 Line3D global = new Line3D(origin, end);
+				 Line3D local = this.toLocal(sector, global);
                     
-                        this.globalStrips.add(global, sector, layer, strip);
-                        this.localStrips.add(local, sector, layer, strip);
+				 this.globalStrips.add(global, sector, layer, strip);
+				 this.localStrips.add(local, sector, layer, strip);
+			     }
                     }
                 }
             }
@@ -337,9 +339,6 @@ public final class RecoilStripFactory {
     public Line3D toLocal(int sector, Line3D global) {
         Line3D local = new Line3D();
         local.copy(global);
-        
-	//        local.rotateZ(Math.toRadians(-60*(sector-1)));
-        //local.rotateY(Math.toRadians(-RecoilConstants.THTILT));
 	local.rotateY((-1+sector*2)*Math.toRadians(1.5*RecoilConstants.HORIZONTHAL_OPENING_ANGLE+270));
         
         return local;
@@ -357,10 +356,25 @@ public final class RecoilStripFactory {
 
                     for(int ic=0; ic<this.getNStripSector(); ic++) {
                          int strip = ic+1;
-                       
-			 Plane3D plane = this.createPLane(sector, region, layer, strip);
-                        this.planeStrips.add(plane, sector, layer, strip);
 
+			 int chamberIndex = getChamberIndex(strip);
+			 double[] dim = factory.getChamber_daughter_Dimensions(region-1,chamberIndex);
+
+			 double yHalf          = dim[1];
+			 double xHalf          = dim[0];
+			 int cStrip = this.getLocalStripId(strip);
+			 double DY = -xHalf; //v strip
+			 if (layer % 2 != 0) { //u strip
+			     DY = -yHalf;
+			 }
+			 int nS =  (int) (DY / RecoilConstants.PITCH);
+			 int nCStrip = nS + (cStrip - 1);
+			 double c = nCStrip * RecoilConstants.PITCH;
+			 if ((layer % 2 == 0 && c>-xHalf && c<xHalf)||(layer % 2 != 0 && c>-yHalf && c<yHalf))
+			     {
+				 Plane3D plane = this.createPLane(sector, region, layer, strip);
+				 this.planeStrips.add(plane, sector, layer, strip);
+			     }
                     }
                 }
             }
@@ -398,50 +412,47 @@ public final class RecoilStripFactory {
     }
         
     private Plane3D createPLane(int sector, int region, int layer, int strip){
-     
+
         int chamber = this.getChamberIndex(strip);
+	int LastStripID = this.getNStripChamber(chamber, region);
 
-        int LastStripID = this.getNStripChamber(chamber, region);
-        Line3D Last_strip = this.getStrip(sector, layer, LastStripID);
-       
-        Line3D First_strip = this.getStrip(sector, layer, 1);
-
-        Line3D test_strip = this.getStrip(sector, layer, 1);
-         
-        Vector3D Dir_strip_test = First_strip.originDir();
-    
-        /* Line orthogonal to the 2 strip */
-        Line3D line = First_strip.distance(Last_strip);
-        
-        Vector3D Dir_line = line.originDir();
-
-        Vector3D normal_plane = Dir_strip_test.cross(Dir_line);
-        
-        Plane3D plane = new Plane3D(First_strip.origin(), normal_plane);
-
-        return plane;
-    }
-    
+	Line3D Last_strip = this.getStrip(sector, layer, LastStripID);
+	
+	Line3D First_strip = this.getStrip(sector, layer, 1);
+	
+	Line3D test_strip = this.getStrip(sector, layer, 1);
+	
+	Vector3D Dir_strip_test = First_strip.originDir();
+	
+	/* Line orthogonal to the 2 strip */
+	Line3D line = First_strip.distance(Last_strip);
+	
+	Vector3D Dir_line = line.originDir();
+	
+	Vector3D normal_plane = Dir_strip_test.cross(Dir_line);
+	
+	Plane3D plane = new Plane3D(First_strip.origin(), normal_plane);
+	
+	return plane;
+    }    
     
     public static void main(String[] args) {
         DatabaseConstantProvider cp = new DatabaseConstantProvider(11, "default");
 
         RecoilConstants.connect(cp);
 
-        RecoilGeant4Factory factory = new RecoilGeant4Factory(cp,2);
+        RecoilGeant4Factory factory = new RecoilGeant4Factory(cp,1);
 
         RecoilStripFactory factory2 = new RecoilStripFactory(cp,1);
   
-        Plane3D plane = factory2.getPlane(6, 1, 200);
-        System.out.println(plane.toString());
+	//        Plane3D plane = factory2.getPlane(6, 1, 200);
+        //System.out.println(plane.toString());
 
-       int strip =20;
-        System.out.println((strip) + " " + factory2.getLocalStripId(strip) + "\n" + factory2.getChamberStrip(1, 6,1,2,strip)) ; 
+        //int strip =20;
+        //System.out.println((strip) + " " + factory2.getLocalStripId(strip) + "\n" + factory2.getChamberStrip(1, 6,1,2,strip)) ; 
         
-        
-    // for(int istrip=0; istrip<factory2.getNStripSector(); istrip++)  {
-        //    System.out.println((istrip+1) + " " + factory2.getChamberIndex(istrip+1) + "\n" + factory2.getStrip(1, 1, istrip+1) + "\n" + factory2.getStrip(1, 2, istrip+1));
-       // }
+	for(int istrip=0; istrip<factory2.getNStripSector(); istrip++)  {
+        System.out.println((istrip+1) + " " + factory2.getChamberIndex(istrip+1) + "\n" + factory2.getStrip(1, 1, istrip+1) + "\n" + factory2.getStrip(1, 2, istrip+1));}
         
         
     }
